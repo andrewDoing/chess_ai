@@ -1,6 +1,15 @@
 # This is where you build your AI for the Chess game.
+import numpy as np
+import random
+import sys
 
 from joueur.base_ai import BaseAI
+
+from games.chess import chess_classes as cc
+from games.chess import get_moves as gm
+from games.chess import check
+from games.chess import interface
+from games.chess import search
 
 
 def pretty_fen(fen, us):
@@ -40,7 +49,6 @@ def pretty_fen(fen, us):
 
     return ''.join(strings)
 
-
 class AI(BaseAI):
     """ The AI you add and improve code inside to play Chess. """
 
@@ -67,19 +75,21 @@ class AI(BaseAI):
         Returns
             str: The name of your Player.
         """
-        return "Chess Python Player"  # REPLACE THIS WITH YOUR TEAM NAME
+        return "DryPyChess"  # REPLACE THIS WITH YOUR TEAM NAME
 
     def start(self):
         """ This is called once the game starts and your AI knows its player and
             game. You can initialize your AI here.
         """
-        # replace with your start logic
+        self.state = interface.fen_to_GameState(self.game.fen)
+        self.history_table = {}
 
     def game_updated(self):
         """ This is called every time the game's state updates, so if you are
         tracking anything you can update it here.
         """
-        # replace with your game updated logic
+        self.state = interface.fen_to_GameState(self.game.fen)
+        self.state.history = self.game.history
 
     def end(self, won, reason):
         """ This is called when the game ends, you can clean up your data and
@@ -90,6 +100,7 @@ class AI(BaseAI):
             reason (str): The human readable string explaining why your AI won
             or lost.
         """
+        #print(self.game.history)
         # replace with your end logic
 
     def make_move(self):
@@ -152,10 +163,40 @@ class AI(BaseAI):
         *******************************************************************************************************
 
         """
+        time_percentage = self.get_setting("time_percentage")
+        if time_percentage == None:
+            # Default Value
+            time_percentage = 0.01 #1%
+        else:
+            try:
+                time_percentage = float(time_percentage)
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+                raise
 
-        print(pretty_fen(self.game.fen, self.player.color))
+        qs_depth = self.get_setting("qs_depth")
+        if qs_depth == None:
+            # Default Value
+            qs_depth = 2
+        else:
+            try:
+                qs_depth = int(qs_depth)
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+                raise
 
-        # This will only work if we are black move the pawn at b2 to b3.
-        # Otherwise we will lose.
-        # Your job is to code SOMETHING to parse the FEN string in some way to determine a valid move, in SAN format.
-        return 'b3'
+        root = search.SearchNode(self.state, None)
+
+        best_action_values = search.tl_ht_qs_ab_id_dl_minimax(root, qs_depth, self.history_table, time_percentage, self.player.time_remaining)
+        print("Best Action + Values: {}".format(best_action_values))
+
+        while best_action_values:
+            bav = best_action_values.pop()
+            if bav[0] is not None:
+                chosen_action = bav[0]
+                break
+
+        san_string = interface.san(chosen_action)
+        print("SAN: {}".format(san_string))
+        
+        return san_string
