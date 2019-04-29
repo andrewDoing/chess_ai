@@ -395,6 +395,7 @@ def maxv(node, depth, qs_depth, alpha, beta, player, end_time, history_table):
     valid_actions = history_table_sort(history_table, node.state, valid_actions)
 
     best_value = -infinity
+    best_move = None
     if valid_actions:
         best_move = valid_actions[0]
 
@@ -429,8 +430,11 @@ def maxv(node, depth, qs_depth, alpha, beta, player, end_time, history_table):
         if alpha >= beta:
             break
 
-    update_history_table(history_table, node.state, best_move)
+    if best_move:
+        update_history_table(history_table, node.state, best_move)
+    
     return best_value
+    
 
 def minv(node, depth, qs_depth, alpha, beta, player, end_time, history_table):
     """Min Player Logic"""
@@ -450,6 +454,7 @@ def minv(node, depth, qs_depth, alpha, beta, player, end_time, history_table):
     valid_actions = history_table_sort(history_table, node.state, valid_actions)
 
     best_value = +infinity
+    best_move = None
     if valid_actions:
         best_move = valid_actions[0]
 
@@ -483,10 +488,12 @@ def minv(node, depth, qs_depth, alpha, beta, player, end_time, history_table):
         # Fail Low
         if beta <= alpha:
             break
-    
-    update_history_table(history_table, node.state, best_move)
-    return best_value
 
+    if best_move:
+        update_history_table(history_table, node.state, best_move)
+
+    return best_value
+    
 
 def ht_qs_ab_dl_minimax(node, depth, qs_depth, end_time, history_table):
     """AI function that finds the best move to make.
